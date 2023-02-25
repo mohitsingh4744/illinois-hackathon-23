@@ -10,3 +10,4 @@ zipp==3.6.0
 statsmodels==0.13.5
 regex
 youtube_transcript_api
+urlparse
