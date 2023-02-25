@@ -1,0 +1,27 @@
+{
+    "manifest_version": 2,
+    "name": "YouTube Shorten Video",
+    "version": "1.0",
+    "description": "A Chrome extension to shorten YouTube videos",
+    "permissions": [
+      "activeTab",
+      "storage",
+      "https://www.youtube.com/*",
+      "web_accessible_resources"
+    ],
+    "background": {
+      "scripts": ["background.js"]
+    },
+    "content_scripts": [
+      {
+        "matches": ["https://www.youtube.com/*"],
+        "js": ["getlink.js"],
+        "run_at": "document_end"
+      }
+    ],
+    "web_accessible_resources": [
+        "images/*"
+      ]
+      
+    
+  }
