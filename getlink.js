@@ -34,53 +34,68 @@ function addButtonToPlayerBar() {
 
         // Add the click event listener to the button
         //input all logic and methods in here
+
+        let videoDurationString = document.querySelector(".ytp-time-duration").innerHTML
+        let minutes = parseInt(videoDurationString.substring(0, videoDurationString.indexOf(":")))
+        let seconds = (minutes * 60) + parseInt(videoDurationString.substring(videoDurationString.indexOf(":")+1))
+        let videoDuration = seconds * 1000;
+        //first is 10 seconds
+        //each after is 20 seconds
+
+
+
         button.addEventListener('click', () => {
             // Get the current video URL
             const videoUrl = window.location.href;
-
+        
             // Define the time intervals to skip to
             const timeIntervals = [{'start': 0, 'end': 10000}, {'start': 463280.0, 'end': 483280.0}, {'start': 843760.0, 'end': 863760.0}, {'start': 639600.0, 'end': 659600.0}, {'start': 73520.0, 'end': 93520.0}, {'start': 110640.0, 'end': 130640.0}, {'start': 36400.0, 'end': 56400.0}, {'start': 129200.0, 'end': 149200.0}, {'start': 147760.0, 'end': 167760.0}, {'start': 658160.0, 'end': 678160.0}, {'start': 481840.0, 'end': 501840.0}, {'start': 92080.0, 'end': 112080.0}, {'start': 593200.0, 'end': 613200.0}, {'start': 862320.0, 'end': 882320.0}, {'start': 249840.0, 'end': 269840.0}];
 
-            // Get the YouTube player element
-            const player = document.getElementById('movie_player');
-
-            timeIntervals.forEach((interval) => {
-                player.seekTo(interval.start, true);
-                player.playVideo();
-        
-                // Pause the video after the interval has ended
-                setTimeout(() => {
-                    player.pauseVideo();
-                }, (interval.end - interval.start) * 1000);
+            // Sort the intervals by start time
+            timeIntervals.sort(function(a, b) {
+                return a.start - b.start;
             });
 
+            // Iterate over the time intervals and calculate the percentage of each interval and the space between intervals
+            let prevEnd = 0;
+            let resultString = '';
+            timeIntervals.forEach(interval => {
+                const intervalStartPercent = Math.floor((interval.start / videoDuration)*100);
+                const intervalEndPercent = Math.floor((interval.end / videoDuration)*100);
+                const intervalSpaceStartPercent = prevEnd;
+                const intervalSpaceEndPercent = intervalStartPercent;
+                resultString += `, transparent ${intervalSpaceStartPercent}%, transparent ${intervalSpaceEndPercent}%, blue ${intervalStartPercent}%, blue ${intervalEndPercent}%`
+                prevEnd = intervalEndPercent;
+            });
+            console.log(resultString);
+
+        
+            // Toggle the button image
+            
+
+            const scissors = button.querySelector('.playerButtonImage');
             if(scissors.src == chrome.runtime.getURL('images/Open.png')){
                 scissors.src = chrome.runtime.getURL('images/close.png');
+                
+                const playerBar = player.querySelector('.ytp-progress-bar');
+                playerBar.style.background = `linear-gradient(to right${resultString})`;
+
+                            
             }
             else{
                 scissors.src = chrome.runtime.getURL('images/Open.png');
+
+                const playerBar = player.querySelector('.ytp-progress-bar');
+                            playerBar.style.background = '';
             }
+        
             // Send the video URL to the background script
             chrome.runtime.sendMessage({ type: 'process_url', url: videoUrl });
-            
         });
+        ;
     }
 }
 
 // Call the addButtonToPlayerBar function when the script is executed
 addButtonToPlayerBar();
 
-// Use a MutationObserver to watch for changes to the DOM
-const observer = new MutationObserver((mutationsList) => {
-    for (let mutation of mutationsList) {
-        if (mutation.type === 'childList') {
-            // Check if the target element has been added to the DOM
-            if (mutation.addedNodes[0] && mutation.addedNodes[0].classList.contains('ytp-right-controls')) {
-                addButtonToPlayerBar();
-            }
-        }
-    }
-});
-
-// Start observing changes to the DOM
-observer.observe(document.documentElement, { childList: true, subtree: true });
