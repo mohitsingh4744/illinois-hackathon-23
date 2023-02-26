@@ -3,7 +3,7 @@
 
 // Define a function to add the button to the player bar
 function addButtonToPlayerBar(timestamps) {
-    console.log(timestamps)
+
     // Get the player element
     let player = document.getElementById('movie_player');
 
@@ -31,6 +31,7 @@ function addButtonToPlayerBar(timestamps) {
         // Create and add child element for image
         let scissors = document.createElement('img');
         scissors.src = chrome.runtime.getURL('images/Open.png');
+        scissors.id = "ScissorIcon"
         scissors.classList.add('playerButtonImage');
         // scissors.style.position = 'relative';
         // scissors.style.top = '-10px';
@@ -49,15 +50,19 @@ function addButtonToPlayerBar(timestamps) {
 
 
         button.addEventListener('click', () => {
-            // Get the current video URL
-        
-            // Define the time intervals to skip to
-            let timeIntervals = [{'start': 0, 'end': 10000}, {'start': 463280.0, 'end': 483280.0}, {'start': 843760.0, 'end': 863760.0}, {'start': 639600.0, 'end': 659600.0}, {'start': 73520.0, 'end': 93520.0}, {'start': 110640.0, 'end': 130640.0}, {'start': 36400.0, 'end': 56400.0}, {'start': 129200.0, 'end': 149200.0}, {'start': 147760.0, 'end': 167760.0}, {'start': 658160.0, 'end': 678160.0}, {'start': 481840.0, 'end': 501840.0}, {'start': 92080.0, 'end': 112080.0}, {'start': 593200.0, 'end': 613200.0}, {'start': 862320.0, 'end': 882320.0}, {'start': 249840.0, 'end': 269840.0}];
+
+            var player = document.querySelector('video');
+            console.log(player.currentTime)
+            // player.currentTime = timestamps[0].start;
+
+
 
             // Sort the intervals by start time
             timestamps.sort(function(a, b) {
                 return a.start - b.start;
             });
+
+            console.log(timestamps)
 
             // Iterate over the time intervals and calculate the percentage of each interval and the space between intervals
             let prevEnd = 0;
@@ -72,6 +77,8 @@ function addButtonToPlayerBar(timestamps) {
             });
             console.log(resultString);
 
+
+
         
             // Toggle the button image
             
@@ -80,7 +87,8 @@ function addButtonToPlayerBar(timestamps) {
             if(scissors.src == chrome.runtime.getURL('images/Open.png')){
                 scissors.src = chrome.runtime.getURL('images/close.png');
                 
-                let playerBar = player.querySelector('.ytp-progress-bar');
+                let playerBar = document.querySelector('.ytp-progress-bar');
+                console.log(playerBar)
                 playerBar.style.background = `linear-gradient(to right${resultString})`;
 
                             
@@ -88,12 +96,32 @@ function addButtonToPlayerBar(timestamps) {
             else{
                 scissors.src = chrome.runtime.getURL('images/Open.png');
 
-                let playerBar = player.querySelector('.ytp-progress-bar');
-                            playerBar.style.background = '';
+                let playerBar = document.querySelector('.ytp-progress-bar');
+                playerBar.style.background = ``;
             }
-        
-            // Send the video URL to the background script
-            chrome.runtime.sendMessage({ type: 'process_url', url: videoUrl });
+
+player.currentTime = timestamps[1].start / 1000;
+let delay = 12000;
+let i = 2;
+let intervalId = setInterval(() => {
+    const interval = timestamps[i];
+    console.log(player.currentTime);
+    console.log(interval.start / 1000);
+    player.currentTime = interval.start / 1000;
+    // if(interval.start / 1000 > player.currentTime){
+    // player.currentTime = interval.start / 1000;
+    // }
+
+    i++;
+    if (i >= timestamps.length) {
+        clearInterval(intervalId);
+    }
+    
+}, delay);
+
+
+           
+
         });
         ;
     }
@@ -124,7 +152,6 @@ async function viewed_points(video_id) {
     let num_points = Math.floor(Math.max(...df_list.map(row => row.timeRangeStartMillis)) / 60000);
     let mark_dur = df_list[0].markerDurationMillis;
     let range_ex = Math.floor(10000 / mark_dur);
-  
     df_list.forEach((row, i) => row.og_index = i);
     df_list.sort((a, b) => b.heatMarkerIntensityScoreNormalized - a.heatMarkerIntensityScoreNormalized);
     //let num_rows = num_points * 3;
@@ -145,6 +172,7 @@ async function viewed_points(video_id) {
     }
   
     let time_stamps = [];
+
     if (point_medians.includes(0)) {
       time_stamps.push({ start: 0, end: 10000 });
       point_medians.splice(point_medians.indexOf(0), 1);
@@ -157,7 +185,7 @@ async function viewed_points(video_id) {
     //console.log(time_stamps);
     addButtonToPlayerBar(time_stamps)
   }
-
+/*
   function deleteOldButtons(){
     let buttons = document.querySelectorAll("#shortenButton")
     console.log(buttons)
@@ -178,7 +206,40 @@ function run(){
 }
     
 window.onload = run;
-window.addEventListener('yt-navigate-start', run,   true);
+window.addEventListener('yt-navigate-start', run,   true);*/
+function deleteOldButtons() {
+    let buttons = document.querySelectorAll("#shortenButton")
+    console.log(buttons)
+    buttons.forEach(button => {
+      button.parentNode.removeChild(button);
+    })
+  }
+  
+
+
+
+function run(){
+    scissors = document.querySelector("#ScissorIcon")
+    if(scissors){
+        scissors.src = chrome.runtime.getURL('images/Open.png');
+    }
+    
+    let playerBar = document.querySelector('.ytp-progress-bar');
+    playerBar.style.background = ``;
+
+    console.log('Hello there!');
+    deleteOldButtons();
+
+
+
+    let videoUrl = window.location.href;
+    let stringURL = videoUrl.toString();
+    
+    viewed_points(get_video_id(stringURL));
+    console.log("Got to the end!")
+  }
+  
+  window.addEventListener('yt-navigate-finish', run, true);
 //window.location.href=base_url+"main?parameter=true";
   /*let videoUrl = window.location.href;
 
